@@ -1,143 +1,141 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-    <title>Printer Scanner</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            padding: 20px;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        button {
-            padding: 12px 20px;
-            background: #007aff;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-
-        .printer {
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            padding: 15px;
-            margin-top: 15px;
-            background: #f9f9f9;
-        }
-
-        input[type="file"] {
-            margin-top: 10px;
-        }
-    </style>
+  <title>Printer Auto Scanner & Print Tool</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    button {
+      padding: 12px 20px;
+      background-color: #007AFF;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      margin: 10px 0;
+      cursor: pointer;
+    }
+    #status {
+      padding: 15px;
+      background-color: #F2F2F7;
+      border-radius: 8px;
+      margin: 15px 0;
+    }
+    .printer {
+      padding: 15px;
+      background-color: #FFFFFF;
+      border: 1px solid #D1D1D6;
+      border-radius: 8px;
+      margin: 10px 0;
+    }
+  </style>
 </head>
-
 <body>
-    <h2>Network Printer Scanner</h2>
-    <button onclick="startScan()">Start Scan</button>
-    <div id="status">Ready to scan...</div>
-    <div id="results"></div>
+  <h2>Wi-Fi Printer Scanner & PDF Sender</h2>
+  <button id="scanBtn">Start Scan</button>
+  <div id="status">Ready to scan...</div>
+  <div id="results"></div>
 
-    <script>
-        async function startScan() {
-            document.getElementById('status').innerText = "Scanning for printers...";
-            const subnet = await getLocalSubnet();
-            const results = document.getElementById('results');
-            results.innerHTML = "";
+  <script>
+    document.getElementById('scanBtn').addEventListener('click', async function () {
+      const statusEl = document.getElementById('status');
+      const resultsEl = document.getElementById('results');
+      resultsEl.innerHTML = '';
+      statusEl.innerHTML = 'Scanning network...';
 
-            for (let i = 1; i <= 20; i++) {
-                const ip = `${subnet}.${i}`;
-                document.getElementById('status').innerText = `Checking ${ip}...`;
-                const isPrinter = await checkPrinter(ip);
-                if (isPrinter) {
-                    const div = document.createElement('div');
-                    div.className = 'printer';
-                    div.innerHTML = `
-            <b>Printer Found:</b> ${ip}<br>
-            <button onclick="connectPrinter('${ip}', this)">Connect</button>
-            <div class="actions" style="display:none;">
-              <input type="file" accept="application/pdf" onchange="uploadPDF(event, '${ip}')">
-              <button onclick="printPDF('${ip}')">Print</button>
-            </div>
-          `;
-                    results.appendChild(div);
-                }
-                await new Promise(r => setTimeout(r, 100));
+      const subnet = await getLocalSubnet();
+
+      for (let i = 1; i <= 20; i++) {
+        const ip = `${subnet}.${i}`;
+        statusEl.innerHTML = `Checking ${ip}...`;
+
+        try {
+          const isPrinter = await checkPrinter(ip);
+          if (isPrinter) {
+            const div = document.createElement('div');
+            div.className = 'printer';
+            div.innerHTML = `
+              <strong>Printer Found</strong><br>
+              IP: ${ip}<br>
+              <button onclick="connectPrinter('${ip}', this)">Connect</button>
+              <div class="uploadSection" style="display:none">
+                <input type="file" accept="application/pdf" onchange="uploadPDF(event, '${ip}')" />
+                <br><small>After selecting a PDF, it will be sent to printer</small>
+              </div>
+            `;
+            resultsEl.appendChild(div);
+          }
+        } catch (e) {
+          console.log('Error:', e);
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 150));
+      }
+
+      statusEl.innerText = 'Scan complete.';
+    });
+
+    async function getLocalSubnet() {
+      return new Promise(resolve => {
+        try {
+          const pc = new RTCPeerConnection({ iceServers: [] });
+          pc.createDataChannel('');
+          pc.createOffer().then(offer => pc.setLocalDescription(offer));
+          pc.onicecandidate = e => {
+            if (e.candidate) {
+              const ip = e.candidate.candidate.split(' ')[4];
+              pc.close();
+              resolve(ip.split('.').slice(0, 3).join('.'));
             }
-
-            document.getElementById('status').innerText = "Scan complete.";
+          };
+          setTimeout(() => resolve('192.168.1'), 1000);
+        } catch {
+          resolve('192.168.1');
         }
+      });
+    }
 
-        async function getLocalSubnet() {
-            return new Promise(resolve => {
-                try {
-                    const pc = new RTCPeerConnection();
-                    pc.createDataChannel('');
-                    pc.createOffer().then(o => pc.setLocalDescription(o));
-                    pc.onicecandidate = e => {
-                        if (e && e.candidate) {
-                            const ip = e.candidate.candidate.split(' ')[4];
-                            resolve(ip.split('.').slice(0, 3).join('.'));
-                            pc.close();
-                        }
-                    };
-                    setTimeout(() => resolve('192.168.1'), 1000);
-                } catch {
-                    resolve('192.168.1');
-                }
-            });
-        }
+    async function checkPrinter(ip) {
+      return new Promise(resolve => {
+        const img = new Image();
+        img.onload = () => resolve(true);
+        img.onerror = () => resolve(false);
+        img.src = `http://${ip}/favicon.ico?${Date.now()}`;
+        setTimeout(() => resolve(false), 1000);
+      });
+    }
 
-        function checkPrinter(ip) {
-            return new Promise(resolve => {
-                const img = new Image();
-                img.onload = () => resolve(true);
-                img.onerror = () => resolve(false);
-                img.src = `http://${ip}/favicon.ico?${Date.now()}`;
-                setTimeout(() => resolve(false), 1200);
-            });
-        }
+    function connectPrinter(ip, btn) {
+      btn.disabled = true;
+      btn.innerText = 'Connected';
+      btn.style.backgroundColor = '#34C759';
+      btn.nextElementSibling.style.display = 'block';
+    }
 
-        function connectPrinter(ip, btn) {
-            btn.innerText = "Connected";
-            btn.disabled = true;
-            btn.style.background = "green";
-            btn.parentElement.querySelector('.actions').style.display = 'block';
-        }
+    function uploadPDF(event, ip) {
+      const file = event.target.files[0];
+      if (!file || file.type !== 'application/pdf') {
+        alert('Please select a PDF file.');
+        return;
+      }
 
-        let pdfFiles = {};
-
-        function uploadPDF(event, ip) {
-            const file = event.target.files[0];
-            if (file && file.type === "application/pdf") {
-                const reader = new FileReader();
-                reader.onload = () => {
-                    pdfFiles[ip] = reader.result;
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        function printPDF(ip) {
-            if (!pdfFiles[ip]) {
-                alert("Please upload a PDF first.");
-                return;
-            }
-            const iframe = document.createElement('iframe');
-            iframe.style.display = "none";
-            iframe.src = pdfFiles[ip];
-            document.body.appendChild(iframe);
-            iframe.onload = () => {
-                iframe.contentWindow.focus();
-                iframe.contentWindow.print();
-            };
-        }
-    </script>
+      const reader = new FileReader();
+      reader.onload = function () {
+        const blob = new Blob([reader.result], { type: 'application/pdf' });
+        fetch(`http://${ip}`, {
+          method: 'POST',
+          body: blob,
+          mode: 'no-cors'
+        }).then(() => alert('PDF sent to printer.'))
+          .catch(err => alert('Failed to send PDF: ' + err));
+      };
+      reader.readAsArrayBuffer(file);
+    }
+  </script>
 </body>
-
 </html>
