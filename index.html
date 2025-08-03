@@ -1,168 +1,719 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
-  <title>Printer Scanner & PDF Sender</title>
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Optimized Network Printer Scanner</title>
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: #f5f5f5;
       padding: 20px;
+      line-height: 1.6;
+    }
+
+    .container {
       max-width: 800px;
       margin: 0 auto;
     }
-    button {
-      padding: 12px 24px;
-      background-color: #007AFF;
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+
+    .card-header {
+      background: #007bff;
+      color: white;
+      padding: 20px;
+    }
+
+    .card-header h1 {
+      font-size: 24px;
+      margin-bottom: 5px;
+    }
+
+    .card-header p {
+      opacity: 0.9;
+      font-size: 14px;
+    }
+
+    .card-content {
+      padding: 20px;
+    }
+
+    .btn {
+      background: #007bff;
       color: white;
       border: none;
-      border-radius: 8px;
-      font-size: 16px;
-      margin: 10px 0;
+      padding: 12px 24px;
+      border-radius: 6px;
       cursor: pointer;
+      font-size: 16px;
+      width: 100%;
+      margin-bottom: 10px;
+      transition: background-color 0.3s;
     }
-    #status {
-      padding: 15px;
-      background-color: #F2F2F7;
-      border-radius: 8px;
+
+    .btn:hover:not(:disabled) {
+      background: #0056b3;
+    }
+
+    .btn:disabled {
+      background: #6c757d;
+      cursor: not-allowed;
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: #007bff;
+      border: 2px solid #007bff;
+    }
+
+    .btn-outline:hover:not(:disabled) {
+      background: #007bff;
+      color: white;
+    }
+
+    .btn-success {
+      background: #28a745;
+    }
+
+    .btn-success:hover:not(:disabled) {
+      background: #1e7e34;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 4px;
+      background: #e9ecef;
+      border-radius: 2px;
+      overflow: hidden;
       margin: 15px 0;
     }
-    .printer {
-      padding: 15px;
-      margin: 10px 0;
-      background-color: #FFFFFF;
-      border: 1px solid #D1D1D6;
-      border-radius: 8px;
+
+    .progress-bar-fill {
+      height: 100%;
+      background: #007bff;
+      animation: progress 2s infinite;
     }
-    input[type="file"] {
-      margin: 10px 0;
+
+    @keyframes progress {
+      0% {
+        transform: translateX(-100%);
+      }
+
+      100% {
+        transform: translateX(100%);
+      }
+    }
+
+    .scan-options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .input-group {
+      margin-bottom: 15px;
+    }
+
+    .input-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .printer-list {
+      list-style: none;
+    }
+
+    .printer-item {
+      border: 1px solid #dee2e6;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      padding: 15px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .printer-item:hover {
+      background: #f8f9fa;
+      border-color: #007bff;
+    }
+
+    .printer-item.selected {
+      background: #e3f2fd;
+      border-color: #007bff;
+    }
+
+    .printer-info h3 {
+      color: #333;
+      margin-bottom: 5px;
+    }
+
+    .printer-info p {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 3px;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .status-online {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .scanning-indicator {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+    }
+
+    .no-printers {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+    }
+
+    .no-printers .icon {
+      font-size: 48px;
+      margin-bottom: 15px;
+      opacity: 0.5;
+    }
+
+    .log-area {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 6px;
+      padding: 15px;
+      max-height: 200px;
+      overflow-y: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      margin-top: 15px;
+    }
+
+    .log-entry {
+      margin-bottom: 5px;
+      padding: 2px 0;
+    }
+
+    .log-info {
+      color: #007bff;
+    }
+
+    .log-success {
+      color: #28a745;
+    }
+
+    .log-error {
+      color: #dc3545;
+    }
+
+    .log-warning {
+      color: #ffc107;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    @media (max-width: 768px) {
+
+      .grid,
+      .scan-options {
+        grid-template-columns: 1fr;
+      }
+
+      .container {
+        padding: 10px;
+      }
     }
   </style>
 </head>
+
 <body>
-  <h1>Printer Scanner + PDF Upload</h1>
-  <button id="scanBtn">Start Scan</button>
-  <div id="status">Ready to scan...</div>
-  <div id="results"></div>
+  <div class="container">
+    <!-- Header -->
+    <div class="card">
+      <div class="card-header">
+        <h1>Optimized Network Printer Scanner</h1>
+        <p>Fast and efficient printer discovery with minimal API calls</p>
+      </div>
+      <div class="card-content">
+        <div class="input-group">
+          <label for="networkRange">Network Range (e.g., 192.168.1)</label>
+          <input type="text" id="networkRange" value="192.168.1" placeholder="192.168.1">
+        </div>
+
+        <div class="scan-options">
+          <button id="quickScanBtn" class="btn">
+            ⚡ Quick Scan (192.168.1.x & 192.168.0.x)
+          </button>
+          <button id="fullScanBtn" class="btn btn-outline">
+            🔍 Full Range Scan
+          </button>
+        </div>
+
+        <div id="scanningIndicator" class="scanning-indicator" style="display: none;">
+          <div class="progress-bar">
+            <div class="progress-bar-fill"></div>
+          </div>
+          <p>Scanning for printers...</p>
+          <p id="scanProgress">Initializing...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Printers List -->
+    <div id="printersCard" class="card" style="display: none;">
+      <div class="card-header">
+        <h1>Found Printers (<span id="printerCount">0</span>)</h1>
+        <p>Click on a printer to select it</p>
+      </div>
+      <div class="card-content">
+        <ul id="printersList" class="printer-list"></ul>
+      </div>
+    </div>
+
+    <!-- Selected Printer Actions -->
+    <div id="actionsCard" class="card" style="display: none;">
+      <div class="card-header">
+        <h1>Printer Actions</h1>
+        <p id="selectedPrinterName">No printer selected</p>
+      </div>
+      <div class="card-content">
+        <div class="grid">
+          <button id="testConnectionBtn" class="btn btn-outline">
+            📡 Test Connection
+          </button>
+          <button id="sendTestPrintBtn" class="btn btn-success">
+            📄 Send Test Print
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- No Printers Found -->
+    <div id="noPrintersCard" class="card no-printers" style="display: none;">
+      <div class="icon">🖨️</div>
+      <h2>No Printers Found</h2>
+      <p>Quick scan checked 192.168.1.x and 192.168.0.x networks.</p>
+      <p><strong>Tip:</strong> Try Full Range Scan or adjust the network range manually.</p>
+    </div>
+
+    <!-- Log Area -->
+    <div class="card">
+      <div class="card-header">
+        <h1>Activity Log</h1>
+        <p>Optimized scanning with minimal API calls</p>
+      </div>
+      <div class="card-content">
+        <div id="logArea" class="log-area"></div>
+        <button id="clearLogBtn" class="btn btn-outline" style="margin-top: 10px;">
+          🗑️ Clear Log
+        </button>
+      </div>
+    </div>
+  </div>
 
   <script>
-    let selectedPrinterIP = '';
+    class OptimizedNetworkPrinterScanner {
+      constructor() {
+        this.printers = [];
+        this.selectedPrinter = null;
+        this.isScanning = false;
 
-    document.getElementById('scanBtn').addEventListener('click', async function() {
-      const statusEl = document.getElementById('status');
-      const resultsEl = document.getElementById('results');
-      resultsEl.innerHTML = '';
-      selectedPrinterIP = '';
-      statusEl.innerHTML = 'Scanning network... (Please wait)';
+        // Only the most common printer ports (reduced from 7 to 2)
+        this.PRINTER_PORTS = [9100, 631]; // Raw printing and IPP
 
-      let subnet = await getLocalSubnet();
-      let scannedRanges = [];
+        // Only essential paths (reduced from 6 to 2)
+        this.PRINTER_PATHS = ['/', '/ipp/print'];
 
-      if (subnet) scannedRanges.push(subnet);
-      scannedRanges.push("192.168.0", "192.168.1");
+        // Common printer IP endings (for quick scan)
+        this.COMMON_PRINTER_IPS = [1, 100, 101, 102, 103, 104, 105, 110, 150, 200, 201, 202, 250, 254];
 
-      for (let net of scannedRanges) {
-        for (let i = 1; i <= 20; i++) {
-          const ip = `${net}.${i}`;
-          statusEl.innerHTML = `Checking ${ip}...`;
+        this.initializeEventListeners();
+        this.log('Optimized scanner initialized - Minimal API calls', 'info');
+      }
+
+      initializeEventListeners() {
+        document.getElementById('quickScanBtn').addEventListener('click', () => this.quickScan());
+        document.getElementById('fullScanBtn').addEventListener('click', () => this.fullScan());
+        document.getElementById('testConnectionBtn').addEventListener('click', () => this.testConnection());
+        document.getElementById('sendTestPrintBtn').addEventListener('click', () => this.sendTestPrint());
+        document.getElementById('clearLogBtn').addEventListener('click', () => this.clearLog());
+      }
+
+      log(message, type = 'info') {
+        const logArea = document.getElementById('logArea');
+        const timestamp = new Date().toLocaleTimeString();
+        const logEntry = document.createElement('div');
+        logEntry.className = `log-entry log-${type}`;
+        logEntry.textContent = `[${timestamp}] ${message}`;
+        logArea.appendChild(logEntry);
+        logArea.scrollTop = logArea.scrollHeight;
+      }
+
+      clearLog() {
+        document.getElementById('logArea').innerHTML = '';
+      }
+
+      updateUI() {
+        const quickScanBtn = document.getElementById('quickScanBtn');
+        const fullScanBtn = document.getElementById('fullScanBtn');
+        const scanningIndicator = document.getElementById('scanningIndicator');
+        const printersCard = document.getElementById('printersCard');
+        const noPrintersCard = document.getElementById('noPrintersCard');
+        const actionsCard = document.getElementById('actionsCard');
+
+        // Update scan buttons
+        quickScanBtn.disabled = this.isScanning;
+        fullScanBtn.disabled = this.isScanning;
+        quickScanBtn.textContent = this.isScanning ? '⏳ Scanning...' : '⚡ Quick Scan (192.168.1.x & 192.168.0.x)';
+        fullScanBtn.textContent = this.isScanning ? '⏳ Scanning...' : '🔍 Full Range Scan';
+
+        scanningIndicator.style.display = this.isScanning ? 'block' : 'none';
+
+        // Update printers list
+        if (this.printers.length > 0) {
+          printersCard.style.display = 'block';
+          noPrintersCard.style.display = 'none';
+          this.renderPrintersList();
+        } else if (!this.isScanning) {
+          printersCard.style.display = 'none';
+          noPrintersCard.style.display = 'block';
+        }
+
+        // Update actions card
+        if (this.selectedPrinter) {
+          actionsCard.style.display = 'block';
+          document.getElementById('selectedPrinterName').textContent = this.selectedPrinter.name;
+        } else {
+          actionsCard.style.display = 'none';
+        }
+
+        document.getElementById('printerCount').textContent = this.printers.length;
+      }
+
+      renderPrintersList() {
+        const printersList = document.getElementById('printersList');
+        printersList.innerHTML = '';
+
+        this.printers.forEach(printer => {
+          const listItem = document.createElement('li');
+          listItem.className = 'printer-item';
+          if (this.selectedPrinter && this.selectedPrinter.ip === printer.ip) {
+            listItem.classList.add('selected');
+          }
+
+          listItem.innerHTML = `
+                        <div class="printer-info">
+                            <h3>🖨️ ${printer.name}</h3>
+                            <p><strong>IP:</strong> ${printer.ip}:${printer.port}</p>
+                            <p><strong>Model:</strong> ${printer.model}</p>
+                            <p><strong>Protocol:</strong> ${printer.protocol.toUpperCase()}</p>
+                            <span class="status-badge status-${printer.status}">${printer.status}</span>
+                        </div>
+                    `;
+
+          listItem.addEventListener('click', () => {
+            this.selectedPrinter = printer;
+            this.log(`Selected printer: ${printer.name} (${printer.ip})`, 'info');
+            this.updateUI();
+          });
+
+          printersList.appendChild(listItem);
+        });
+      }
+
+      async quickScan() {
+        this.startScan();
+
+        // Check both most common network ranges
+        const commonNetworkRanges = ['192.168.1', '192.168.0'];
+        const totalIPs = commonNetworkRanges.length * this.COMMON_PRINTER_IPS.length;
+
+        this.log(`Quick scan started for both 192.168.1.x and 192.168.0.x (${totalIPs} IPs total)`, 'info');
+
+        try {
+          let checkedCount = 0;
+
+          for (const networkRange of commonNetworkRanges) {
+            this.log(`Scanning network range: ${networkRange}.x`, 'info');
+
+            for (const ipEnding of this.COMMON_PRINTER_IPS) {
+              const ip = `${networkRange}.${ipEnding}`;
+              document.getElementById('scanProgress').textContent =
+                `Checking ${ip} (${checkedCount + 1}/${totalIPs})`;
+
+              const printer = await this.scanIP(ip);
+              if (printer) {
+                this.printers.push(printer);
+                this.log(`Found printer: ${printer.name} at ${printer.ip}`, 'success');
+                this.updateUI();
+              }
+
+              checkedCount++;
+
+              // Small delay to prevent overwhelming
+              await new Promise(resolve => setTimeout(resolve, 50));
+            }
+          }
+
+          this.log(`Quick scan completed. Found ${this.printers.length} printer(s) across both networks`, 'success');
+        } catch (error) {
+          this.log(`Quick scan error: ${error.message}`, 'error');
+        } finally {
+          this.endScan();
+        }
+      }
+
+      async fullScan() {
+        const networkRange = document.getElementById('networkRange').value.trim();
+        if (!networkRange) {
+          this.log('Please enter a network range', 'error');
+          return;
+        }
+
+        this.startScan();
+        this.log(`Full scan started for ${networkRange}.1-254`, 'info');
+
+        try {
+          const batchSize = 10; // Smaller batches for better performance
+
+          for (let i = 1; i <= 254; i += batchSize) {
+            const batch = [];
+            for (let j = i; j < i + batchSize && j <= 254; j++) {
+              const ip = `${networkRange}.${j}`;
+              batch.push(this.scanIP(ip));
+            }
+
+            document.getElementById('scanProgress').textContent =
+              `Scanning ${networkRange}.${i}-${Math.min(i + batchSize - 1, 254)}`;
+
+            const results = await Promise.allSettled(batch);
+            results.forEach(result => {
+              if (result.status === 'fulfilled' && result.value) {
+                this.printers.push(result.value);
+                this.log(`Found printer: ${result.value.name} at ${result.value.ip}`, 'success');
+                this.updateUI();
+              }
+            });
+
+            // Longer delay for full scan to be more network-friendly
+            await new Promise(resolve => setTimeout(resolve, 200));
+          }
+
+          this.log(`Full scan completed. Found ${this.printers.length} printer(s)`, 'success');
+        } catch (error) {
+          this.log(`Full scan error: ${error.message}`, 'error');
+        } finally {
+          this.endScan();
+        }
+      }
+
+      startScan() {
+        this.isScanning = true;
+        this.printers = [];
+        this.selectedPrinter = null;
+        this.updateUI();
+      }
+
+      endScan() {
+        this.isScanning = false;
+        this.updateUI();
+      }
+
+      async scanIP(ip) {
+        // Try only the most common printer port first (9100)
+        let printer = await this.checkPrinterPort(ip, 9100);
+        if (printer) return printer;
+
+        // If not found, try IPP port (631)
+        printer = await this.checkPrinterPort(ip, 631);
+        return printer;
+      }
+
+      async checkPrinterPort(ip, port) {
+        try {
+          const protocol = 'http';
+          const timeout = 1000; // Reduced timeout to 1 second
+
+          // Try only the most essential path first
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), timeout);
 
           try {
-            const isPrinter = await checkPrinter(ip);
-            if (isPrinter) {
-              resultsEl.innerHTML += `
-                <div class="printer">
-                  <strong>Printer Detected</strong><br>
-                  IP: ${ip}<br>
-                  <button onclick="selectPrinter('${ip}')">Connect</button>
-                  <button onclick="window.open('http://${ip}', '_blank')">Open Web Interface</button>
-                </div>
-              `;
-            }
-          } catch (e) {
-            console.log(`Error checking ${ip}:`, e);
-          }
+            const url = `${protocol}://${ip}:${port}/`;
+            const response = await fetch(url, {
+              method: 'GET',
+              signal: controller.signal,
+              mode: 'no-cors',
+            });
 
-          await new Promise(resolve => setTimeout(resolve, 150));
+            clearTimeout(timeoutId);
+            return this.createPrinterInfo(ip, port, protocol);
+          } catch (fetchError) {
+            clearTimeout(timeoutId);
+
+            // Only try IPP path for port 631
+            if (port === 631) {
+              return await this.checkIPPPrinter(ip, port);
+            }
+          }
+        } catch (error) {
+          // IP not reachable
         }
+
+        return null;
       }
 
-      const found = document.querySelectorAll('.printer').length;
-      statusEl.innerHTML = found
-        ? `✅ Scan complete. Found ${found} printer(s).`
-        : '❌ No printers found. Please ensure Wi-Fi is connected.';
-    });
+      createPrinterInfo(ip, port, protocol) {
+        let name, model;
 
-    function selectPrinter(ip) {
-      selectedPrinterIP = ip;
-      const resultsEl = document.getElementById('results');
-      resultsEl.innerHTML = `
-        <h3>Connected to Printer at ${ip}</h3>
-        <input type="file" id="pdfFile" accept="application/pdf"><br>
-        <button onclick="sendToPrinter()">Print PDF</button>
-        <br><br>
-        <button onclick="window.open('http://${ip}', '_blank')">Open Web Interface</button>
-      `;
-      document.getElementById('status').innerText = `Connected to ${ip}`;
-    }
-
-    function sendToPrinter() {
-      const fileInput = document.getElementById('pdfFile');
-      const file = fileInput.files[0];
-      if (!file || !selectedPrinterIP) {
-        alert("Please connect and upload a PDF first.");
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = function() {
-        fetch(`http://${selectedPrinterIP}/`, {
-          method: 'POST',
-          body: reader.result,
-          headers: {
-            'Content-Type': 'application/pdf'
-          }
-        }).then(res => {
-          alert("Sent to printer. Please check print output.");
-        }).catch(err => {
-          alert("Failed to send PDF. Make sure printer is on and supports raw PDF printing.");
-        });
-      };
-      reader.readAsArrayBuffer(file);
-    }
-
-    async function getLocalSubnet() {
-      return new Promise(resolve => {
-        try {
-          const pc = new RTCPeerConnection({iceServers:[]});
-          pc.createDataChannel('');
-          pc.createOffer().then(offer => pc.setLocalDescription(offer));
-          pc.onicecandidate = e => {
-            if (e.candidate) {
-              const ip = e.candidate.candidate.split(' ')[4];
-              pc.close();
-              resolve(ip.split('.').slice(0, 3).join('.'));
-            }
-          };
-          setTimeout(() => resolve(null), 1500);
-        } catch (e) {
-          resolve(null);
+        switch (port) {
+          case 631:
+            name = `IPP Printer at ${ip}`;
+            model = 'IPP Compatible';
+            break;
+          case 9100:
+            name = `Raw Printer at ${ip}`;
+            model = 'Raw/PCL Compatible';
+            break;
+          default:
+            name = `Network Printer at ${ip}`;
+            model = 'Unknown Model';
         }
-      });
-    }
 
-    async function checkPrinter(ip) {
-      return new Promise(resolve => {
-        const img = new Image();
-        img.onload = () => resolve(true);
-        img.onerror = () => {
-          const img2 = new Image();
-          img2.onload = () => resolve(true);
-          img2.onerror = () => resolve(false);
-          img2.src = `http://${ip}:631/favicon.ico?${Date.now()}`;
+        return {
+          ip,
+          name,
+          model,
+          status: 'online',
+          port,
+          protocol
         };
-        img.src = `http://${ip}/favicon.ico?${Date.now()}`;
-        setTimeout(() => resolve(false), 1200);
-      });
+      }
+
+      async checkIPPPrinter(ip, port) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 1000);
+
+          const response = await fetch(`http://${ip}:${port}/ipp/print`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/ipp',
+            },
+            signal: controller.signal,
+            mode: 'no-cors',
+          });
+
+          clearTimeout(timeoutId);
+          return this.createPrinterInfo(ip, port, 'http');
+        } catch (error) {
+          return null;
+        }
+      }
+
+      async testConnection() {
+        if (!this.selectedPrinter) return;
+
+        this.log(`Testing connection to ${this.selectedPrinter.name}...`, 'info');
+
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+          const url = `${this.selectedPrinter.protocol}://${this.selectedPrinter.ip}:${this.selectedPrinter.port}`;
+          const response = await fetch(url, {
+            signal: controller.signal,
+            mode: 'no-cors',
+          });
+
+          clearTimeout(timeoutId);
+          this.log(`✅ Connection successful to ${this.selectedPrinter.name}`, 'success');
+        } catch (error) {
+          this.log(`❌ Connection failed to ${this.selectedPrinter.name}: ${error.message}`, 'error');
+        }
+      }
+
+      async sendTestPrint() {
+        if (!this.selectedPrinter) return;
+
+        const testData = `Test Print Job
+===============
+Printer: ${this.selectedPrinter.name}
+IP: ${this.selectedPrinter.ip}
+Port: ${this.selectedPrinter.port}
+Time: ${new Date().toLocaleString()}
+
+This is a test print from the Optimized Network Printer Scanner.
+
+Status: ${this.selectedPrinter.status}
+Model: ${this.selectedPrinter.model}
+
+End of test print.
+`;
+
+        this.log(`Sending test print to ${this.selectedPrinter.name}...`, 'info');
+
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+          const response = await fetch(`http://${this.selectedPrinter.ip}:${this.selectedPrinter.port}`, {
+            method: 'POST',
+            body: testData,
+            signal: controller.signal,
+            mode: 'no-cors',
+          });
+
+          clearTimeout(timeoutId);
+          this.log(`📄 Test print sent successfully to ${this.selectedPrinter.name}`, 'success');
+        } catch (error) {
+          this.log(`❌ Failed to send test print: ${error.message}`, 'error');
+        }
+      }
     }
+
+    // Initialize the scanner when the page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      window.printerScanner = new OptimizedNetworkPrinterScanner();
+    });
   </script>
 </body>
+
 </html>
